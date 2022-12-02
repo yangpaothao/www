@@ -51,7 +51,7 @@ if(count($_GET) > 0)
             function clearRegistrationform(){
                 $('#frmregistration')[0].reset()
                 $("#btnfrmregistration").prop('disabled', true);
-                return(false); //Put this here to stop the form from reloading the page.
+                return(false); //Put this here to stop the form from reloading the page. ok.
             }
             function clearAddcustomerform(){
                 $('#frmaddcustomer')[0].reset()
