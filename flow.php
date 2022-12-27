@@ -49,6 +49,9 @@ if(count($_GET) > 0)
                 
                 //$('#tbl_flow_data').DataTable();
                 //$('#tbl_flow_data').tableScroll({height: 300px});
+                
+                //After loading, we will get the list of flights.
+                
             });
             function updateFlow(obj, recno, lineno){
                 thisid = $(obj).prop('id');
@@ -184,14 +187,17 @@ function UpdateFlow()
         $thistime = date('H:i');
         $thisdata = array($realfield => $thisvalue, 'actualdeparture' => $thistime); 
     }
+    if($realfield == "isdeleted")
+    {
+        $thisdata = array($realfield => $thisvalue);
+    }
     else
     {
-        $thisdata = array($realfield => ($thisvalue != 'Select' ? $thisvalue : NULL)); //First we remove the first 3 char at start then we remove the last character
+        $thisdata = array($realfield => ($thisvalue != 'Select' ? $thisvalue : NULL));
     }
     $thiswhere = array("recno" => $_POST['recno']);
-    //PDOUpdate($thistable=null, $thisdata = null, $thiswhere = null)
+    file_put_contents("./dodebug/debug.txt", "this recno: ".$_POST['recno']." ---this value: ".$thisvalue, FILE_APPEND);
     $result = $db->PDOUpdate($thistable, $thisdata, $thiswhere, $_POST['recno']);
-    //file_put_contents("./dodebug/debug.txt", var_dump($_POST), FILE_APPEND);
     if(isset($result))
     {
         echo 'Success';
@@ -233,7 +239,7 @@ function Main()
         }
     }
     $sql = "SELECT flow.*, so.recno as so_recno FROM flow INNER JOIN service_orders so ON flow.recno=so.foreignkey_flow_recno WHERE flow.date <= '".date('Y-m-d', strtotime($thistomorrow))."' AND  flow.isdeparted=false AND flow.isdeleted = false ORDER BY date, customer";
-    //file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
+    file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
     $result = $db->PDOMiniquery($sql);
 
     $thistable = "note";
@@ -265,7 +271,7 @@ function Main()
                         <div class="status-delayed">Parked/Delayed</div>
                     </div>
                 </div>
-                <div style="height: 98%; width: 100%; overflow-y: auto;">
+                <div style=" width: 100%; overflow-y: auto;">
                    <table id="tbl_flow_data" class="tbl-flow-data">
                         <thead>
                             <tr style="background-color: #173346;">
@@ -320,11 +326,10 @@ function Main()
                                         }
                                     }
                                     $tempdate = $curdate;
-                                    if($rs['schedulearrival'] != "")
-                                    {
-                                       $thisbgcolor = 'white';
-                                       $thisfontcolor = 'Black'; 
-                                    }
+                                    
+                                    $thisbgcolor = 'white';
+                                    $thisfontcolor = 'Black'; 
+                                    
                                     if($rs['estimatearrival'] != "")
                                     {
                                        $thisbgcolor = 'yellow';
@@ -358,7 +363,7 @@ function Main()
                                                 $pt->SltEngineer()->GetSelect("txtengineers_$i", $rs['engineers'], true, true, "updateFlow(this, $thisrecno, $i)");?>
                                             </div>
                                         </td>
-                                        <td style="height: 40px; width: 300px !important;"><textarea class="flow-txtarea-note" id="txtnote_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);"><?= $rs['note']?></textarea></td>
+                                        <td style="height: 40px; width: 300px !important;"><textarea style="border: none;" class="flow-txtarea-note" id="txtnote_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);"><?= $rs['note']?></textarea></td>
                                         <td style="height: 40px; width: 60px !important;">
                                             <select style="height: 40px; width: 99%;" class="flow-slt-status" id="sltstatus_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" >
                                                 <option value="Select" >Select</option><?php

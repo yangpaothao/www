@@ -56,108 +56,139 @@ if(count($_GET) > 0)
 function PaintFid()
 {
     global $db, $pt;
+
+    $thisday = date('m/d/Y');
+    $thistomorrow = date('m/d/Y', strtotime('+1 day'));
+    $tempdatearray = array($thisday, $thistomorrow);
+    for($i=0; $i<count($tempdatearray); $i++)
+    {
+        //First, we want to refresh flow with schedule flight, we want to insert what is in schedule flight that is not yet into flow.
+        //$sql = "SELECT fs.* FROM flight_schedule fs LEFT OUTER JOIN flow f ON fs.customer = f.customer AND fs.actype = f.actype AND fs.flightnumber = f.flightnumber ";
+        //$sql .= "WHERE fs.dates LIKE '%$tempdatearray[$i]%' AND fs.isdeleted = false AND f.date IS NULL ";
+        //$sql .= "AND (fs.dates LIKE '%$tempdatearray[$i]%' AND fs.isdeleted = false AND f.date = '".date('Y-m-d', strtotime($tempdatearray[$i]))."')";
+        
+        $sql = "SELECT fs.* FROM flight_schedule fs LEFT OUTER JOIN flow f ON fs.customer = f.customer AND fs.actype = f.actype AND fs.flightnumber = f.flightnumber ";
+        $sql .= "WHERE fs.dates LIKE '%$tempdatearray[$i]%' AND fs.isdeleted = false AND f.date IS NULL";
+        //file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
+        $result = $db->PDOMiniquery($sql);
+        foreach($result as $rs)
+        {
+            $thistable = "flow";
+            $thisdata = array("customer" => $rs['customer'], "actype" => $rs['actype'], "flightnumber" => $rs['flightnumber'], "date" => date('Y-m-d', strtotime($tempdatearray[$i])),
+                            "schedulearrival" => ($rs['schedulearrival'] != NULL) ? $rs['schedulearrival'] : NULL, 
+                            "scheduledeparture" => ($rs['scheduledeparture'] != NULL) ? $rs['scheduledeparture'] : NULL);
+            $db->PDOInsert($thistable, $thisdata);
+            
+            $thistable = "service_orders";
+            $thisdata = array("customer" => $rs['customer'], "actype" => $rs['actype'], "flightnumber" => $rs['flightnumber'], "date" => date('Y-m-d', strtotime($tempdatearray[$i])),
+                            "schedulearrival" => ($rs['schedulearrival'] != NULL) ? $rs['schedulearrival'] : NULL, 
+                            "scheduledeparture" => ($rs['scheduledeparture'] != NULL) ? $rs['scheduledeparture'] : NULL);
+        }
+    }
+    
+    
     $thisfields = array('All');
     $thistable = "flow";
     $thiswhere = array('isdeparted' => false, 'isdeleted' => false);
-    $sql = "SELECT *  FROM flow WHERE isdeparted=false AND isdeleted = false ORDER BY date, customer";
+    $sql = "SELECT *  FROM flow WHERE flow.date <= '".date('Y-m-d', strtotime($thistomorrow))."' AND isdeparted=false AND isdeleted = false ORDER BY date, customer";
     $result = $db->PDOMiniquery($sql);
     
     $thistable = "note";
     $thisfields = array('recno', 'note');
     $thiswhere = array('isactive' => true, 'isdeleted' => false);    
     $noterows = $db->PDOQuery($thistable, $thisfields, $thiswhere);?>
-    
-    <table id="tbl_flow_data" class="tbl-flow-data">
-        <tr>
-            <th style="width: 20px !important; position: sticky; top: 0px; z-index: 10;"></th>
-            <th style="width: 160px !important; position: sticky; top: 0px; z-index: 10;">Cust</th>
-            <th style="width: 60px !important; position: sticky; top: 0px; z-index: 10;">A/C Type</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">Flt No.</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">SArr.</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">EArr.</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">AArr.</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">Gate</th>                                  
-            <th style="position: sticky; top: 0px; z-index: 10;">SDep.</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">EDep.</th>
-            <th style="position: sticky; top: 0px; z-index: 10;">ADep.</th>
-            <th style="width: 200px !important; position: sticky; top: 0px; z-index: 10;">Engineer</th>
-            <th style="width: 300px !important; position: sticky; top: 0px;">Note</th>
-        </tr><?php
-        $i=1;
-        if(isset($result))
-        {
-            $tempdate = "";
-            $curdate = "";
-            foreach($result as $rs)
+    <div style=" width: 100%; overflow-y: auto;">
+        <table id="tbl_flow_data" class="tbl-flow-data">
+            <tr>
+                <th style="width: 20px !important; position: sticky; top: 0px; z-index: 10;"></th>
+                <th style="width: 160px !important; position: sticky; top: 0px; z-index: 10;">Cust</th>
+                <th style="width: 60px !important; position: sticky; top: 0px; z-index: 10;">A/C Type</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">Flt No.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">SArr.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">EArr.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">AArr.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">Gate</th>                                  
+                <th style="position: sticky; top: 0px; z-index: 10;">SDep.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">EDep.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">ADep.</th>
+                <th style="width: 200px !important; position: sticky; top: 0px; z-index: 10;">Engineer</th>
+                <th style="width: 300px !important; position: sticky; top: 0px;">Note</th>
+            </tr><?php
+            $i=1;
+            if(isset($result))
             {
-                $curdate = $rs['date'];
-                //file_put_contents("./dodebug/debug.txt", $tempdate." != ".$curdate."===", FILE_APPEND);
-                if($tempdate == "" || strtotime($tempdate) != strtotime($curdate))
+                $tempdate = "";
+                $curdate = "";
+                foreach($result as $rs)
                 {
-                    if($tempdate != "")
+                    $curdate = $rs['date'];
+                    //file_put_contents("./dodebug/debug.txt", $tempdate." != ".$curdate."===", FILE_APPEND);
+                    if($tempdate == "" || strtotime($tempdate) != strtotime($curdate))
                     {
-                        //file_put_contents("./dodebug/debug.txt", "INHERE", FILE_APPEND);
-                        //First time we come here, this would be empty so we will not get here.  But everytime after that
-                        //if we get here, it's cuz it's a new date.  That means we want to show a date divider.?>
-                        <tr>
-                            <td colspan="16" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
-                        </tr><?php
+                        if($tempdate != "")
+                        {
+                            //file_put_contents("./dodebug/debug.txt", "INHERE", FILE_APPEND);
+                            //First time we come here, this would be empty so we will not get here.  But everytime after that
+                            //if we get here, it's cuz it's a new date.  That means we want to show a date divider.?>
+                            <tr>
+                                <td colspan="16" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                            </tr><?php
+                        }
+                        if($tempdate == "")
+                        {//We only come in here the first time and only 1 time.?>
+                            <tr>
+                                <td colspan="16" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                            </tr><?php
+                        }
                     }
-                    if($tempdate == "")
-                    {//We only come in here the first time and only 1 time.?>
-                        <tr>
-                            <td colspan="16" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
-                        </tr><?php
+                    $tempdate = $curdate;
+
+                    $thisbgcolor = 'white';
+                    $thisfontcolor = 'Black'; 
+
+                    if($rs['estimatearrival'] != "")
+                    {
+                       $thisbgcolor = 'yellow';
+                       $thisfontcolor = 'black'; 
                     }
+                    if($rs['actualarrival'] != "")
+                    {
+                       $thisbgcolor = 'green';
+                       $thisfontcolor = 'black';
+                    }
+                    if($rs['status'] != "")
+                    {
+                       $thisbgcolor = 'darkred';
+                       $thisfontcolor = 'white';
+                    }?>
+                    <tr id="tr<?=$i?>" style="background-color: <?= $thisbgcolor?>; color: <?= $thisfontcolor ?>;";>
+                        <td style="height: 40px; width: 20px !important; color: <?= $thisfontcolor ?>;"><?= $i ?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['customer']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actype']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['flightnumber']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['schedulearrival']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['estimatearrival']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actualarrival']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['gate']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['scheduledeparture']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['estimatedeparture']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actualdeparture']?></td>
+                        <td style="height: 40px; width: 300px !important; color: <?= $thisfontcolor ?>;"><?php
+                            $thisrecno = $rs['recno'];
+                            $pt->SltEngineer()->GetString($rs['engineers']);?>
+                        </td>
+                        <td style="height: 40px; width: 300px !important; color: <?= $thisfontcolor ?>"><?= $rs['note']?></td>
+                    </tr><?php
+                    $i++;
                 }
-                $tempdate = $curdate;
-                if($rs['schedulearrival'] != "")
-                {
-                   $thisbgcolor = 'white';
-                   $thisfontcolor = 'Black'; 
-                }
-                if($rs['estimatearrival'] != "")
-                {
-                   $thisbgcolor = 'yellow';
-                   $thisfontcolor = 'black'; 
-                }
-                if($rs['actualarrival'] != "")
-                {
-                   $thisbgcolor = 'green';
-                   $thisfontcolor = 'black';
-                }
-                if($rs['status'] != "")
-                {
-                   $thisbgcolor = 'darkred';
-                   $thisfontcolor = 'white';
-                }?>
-                <tr id="tr<?=$i?>" style="background-color: <?= $thisbgcolor?>; color: <?= $thisfontcolor ?>;";>
-                    <td style="height: 40px; width: 20px !important; color: <?= $thisfontcolor ?>;"><?= $i ?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['customer']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actype']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['flightnumber']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['schedulearrival']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['estimatearrival']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actualarrival']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['gate']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['scheduledeparture']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['estimatedeparture']?></td>
-                    <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actualdeparture']?></td>
-                    <td style="height: 40px; width: 300px !important; color: <?= $thisfontcolor ?>;"><?php
-                        $thisrecno = $rs['recno'];
-                        $pt->SltEngineer()->GetString($rs['engineers']);?>
-                    </td>
-                    <td style="height: 40px; width: 300px !important; color: <?= $thisfontcolor ?>"><?= $rs['note']?></td>
-                </tr><?php
-                $i++;
             }
-        }
-        else
-        {?>
-        <tr><td>There is no data</td><tr>
-        <?php
-        }?>  
-    </table><?php
+            else
+            {?>
+            <tr><td>There is no data</td><tr>
+            <?php
+            }?>  
+        </table>
+    </div><?php
 }
 function Main()
 {

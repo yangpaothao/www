@@ -4,7 +4,7 @@ date_default_timezone_set('America/Chicago'); //THIS MAKES THE WEBSITE USE THIS 
 $temp_page = filter_input(INPUT_SERVER, 'PHP_SELF'); // will look like /index.php or /somedir/somepage.php
 $explode_page = explode("/", $temp_page); //This variable will now be an array and the page name is the last element of this array
 $this_page = end($explode_page);
-if(!isset($_SESSION['user']) && $this_page != "verifyme.php" && $this_page != "index.php" && $this_page != "retrievepassword.php" && $this_page != "resetpassword.php")
+if(!isset($_SESSION['user']) && $this_page != "verifyme.php" && $this_page != "index.php" && $this_page != "retrievepassword.php" && $this_page != "resetpassword.php"  && $this_page != "apicurl.php" )
 {
     header("Location: /index.php"); //Unless this is the main/front page, if user does not have a logged session, they will be forced to login first.
     exit();

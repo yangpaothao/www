@@ -320,7 +320,7 @@ class PDOCON {
             }
             $sql = rtrim($sql, " AND ");
         }
-        //file_put_contents("./dodebug/debug.txt", 'update: '.$sql, FILE_APPEND);
+        file_put_contents("./dodebug/debug.txt", 'update: '.$sql, FILE_APPEND);
          try {
             $q = $this->conn->prepare($sql);
             foreach($thisdata as $key => $value)
@@ -332,7 +332,7 @@ class PDOCON {
                 }
                 else if(is_bool($value))
                 {
-                    //file_put_contents("./dodebug/debug.txt", 'in bool', FILE_APPEND);
+                   //file_put_contents("./dodebug/debug.txt", 'in bool', FILE_APPEND);
                     $q->bindValue(":$key", $value, PDO::PARAM_BOOL);
                 }
                 else if(is_null($value) || $value == "")
@@ -346,6 +346,7 @@ class PDOCON {
                     $q->bindValue(":$key", $value, PDO::PARAM_STR);
                 }
             }
+            //file_put_contents("./dodebug/debug.txt", 'value?: '.$value, FILE_APPEND);
             foreach($thiswhere as $key => $value)
             {
                 if(is_numeric($value) && !is_float($value))
@@ -365,6 +366,7 @@ class PDOCON {
                     $q->bindValue(":$key", $value, PDO::PARAM_STR);
                 }
             }
+            //file_put_contents("./dodebug/debug.txt", 'value: '.$value, FILE_APPEND);
             $q ->execute();   
             if($thisrecno != null)
             {

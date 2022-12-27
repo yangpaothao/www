@@ -83,11 +83,7 @@ if(count($_GET) > 0)
                     $("#main_div_body_manageaircraft_right_container").html(result);
                 });
             }
-            function manageAircraft(obj, lineno, from){
-                $.post('<?=$_SERVER['PHP_SELF']; ?>', 'cmd=ManageAircraft&recno='+$('body').data(lineno)+'&from='+from, function(result){
-                    $("#main_div_body_manageaircraft_right_container").html(result);
-                });
-            }
+           
             function submitAddflight(){
                 if($("#sltcustomer").val() == ""){
                     alert('Please select a custoemr from the list.');
