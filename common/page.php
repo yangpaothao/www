@@ -1,6 +1,7 @@
 <?php
 session_start();
-date_default_timezone_set('America/Chicago'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
+//date_default_timezone_set('America/Chicago'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
+date_default_timezone_set('Australia/Sydney'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
 $temp_page = filter_input(INPUT_SERVER, 'PHP_SELF'); // will look like /index.php or /somedir/somepage.php
 $explode_page = explode("/", $temp_page); //This variable will now be an array and the page name is the last element of this array
 $this_page = end($explode_page);

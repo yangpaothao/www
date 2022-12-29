@@ -104,10 +104,12 @@ function PaintFid()
                 <th style="width: 160px !important; position: sticky; top: 0px; z-index: 10;">Cust</th>
                 <th style="width: 60px !important; position: sticky; top: 0px; z-index: 10;">A/C Type</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">Flt No.</th>
+                <th style="position: sticky; top: 0px; z-index: 10;">From Station</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">SArr.</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">EArr.</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">AArr.</th>
-                <th style="position: sticky; top: 0px; z-index: 10;">Gate</th>                                  
+                <th style="position: sticky; top: 0px; z-index: 10;">Gate</th>  
+                <th style="position: sticky; top: 0px; z-index: 10;">To Station</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">SDep.</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">EDep.</th>
                 <th style="position: sticky; top: 0px; z-index: 10;">ADep.</th>
@@ -131,13 +133,13 @@ function PaintFid()
                             //First time we come here, this would be empty so we will not get here.  But everytime after that
                             //if we get here, it's cuz it's a new date.  That means we want to show a date divider.?>
                             <tr>
-                                <td colspan="16" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                                <td colspan="18" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
                             </tr><?php
                         }
                         if($tempdate == "")
                         {//We only come in here the first time and only 1 time.?>
                             <tr>
-                                <td colspan="16" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                                <td colspan="18" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
                             </tr><?php
                         }
                     }
@@ -156,7 +158,12 @@ function PaintFid()
                        $thisbgcolor = 'green';
                        $thisfontcolor = 'black';
                     }
-                    if($rs['status'] != "")
+                    if($rs['status'] == "Cancelled")
+                    {
+                       $thisbgcolor = 'MediumOrchid';
+                       $thisfontcolor = 'white';
+                    }
+                    if($rs['status'] == "Delayed" || $rs['status'] == "Parked")
                     {
                        $thisbgcolor = 'darkred';
                        $thisfontcolor = 'white';
@@ -166,10 +173,12 @@ function PaintFid()
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['customer']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actype']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['flightnumber']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['fromstation']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['schedulearrival']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['estimatearrival']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actualarrival']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['gate']?></td>
+                        <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['tostation']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['scheduledeparture']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['estimatedeparture']?></td>
                         <td style="height: 40px; color: <?= $thisfontcolor ?>;"><?= $rs['actualdeparture']?></td>
@@ -221,6 +230,8 @@ function Main()
                         <div class="status-eta">ETA</div>
                         <div class="status-ata">ATA</div>
                         <div class="status-delayed">Parked/Delayed</div>
+                        <div class="status-cancelled">Cancelled</div>
+                        
                     </div>
                 </div>
                 <div class="div-flow-body-container" id="div_flow_body_container">

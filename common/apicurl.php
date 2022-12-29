@@ -50,7 +50,7 @@
     //echo $explodeident;
         $queryParams = array(
         
-            'start' => date('Y-m-d'),
+        'start' => date('Y-m-d'),
         'end' => date('Y-m-d', strtotime($thistomorrow))
     );
     //At this point we should get an array = ['flight1', 'flight2',...,'flightn'];

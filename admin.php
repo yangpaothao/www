@@ -1230,6 +1230,7 @@ function UpdateCustomer()
     $thisfields = Array();
     $thistable = "customer_master";
     $thisfield = substr($_POST['field'], 3);
+    //file_put_contents("./dodebug/debug.txt", $thisfield.' = '.$_POST['value'], FILE_APPEND);
     if(($thisfield == "iscargo" || $thisfield == "ispassenger" || $thisfield == "isactive" ) && $_POST['value'] == 'Yes')
     {
         $thisdata = array($thisfield => true);  
@@ -1378,11 +1379,11 @@ function GetCustomerdata()
                         }
                         if($rs['isactive'] == true)
                         {?>
-                            <input type="checkbox" class="zipcode" id="chkispassenger" name="chkisactive" value="chkisactive"onchange="updateCustomer(this);"  checked />&nbsp;&nbsp;Active<br/><?php
+                            <input type="checkbox" class="zipcode" id="chkisactive" name="chkisactive" value="chkisactive"onchange="updateCustomer(this);"  checked />&nbsp;&nbsp;Active<br/><?php
                         }
                         else
                         {?>
-                            <input type="checkbox" class="zipcode" id="chkispassenger" name="chkisactive" value="chkisactive"onchange="updateCustomer(this);"  />&nbsp;&nbsp;Active<br/><?php                                
+                            <input type="checkbox" class="zipcode" id="chkisactive" name="chkisactive" value="chkisactive"onchange="updateCustomer(this);"  />&nbsp;&nbsp;Active<br/><?php                                
                         }?>    
                     </td>
                 </tr>

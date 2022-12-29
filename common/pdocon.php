@@ -277,6 +277,117 @@ class PDOCON {
             throw $ex;
         }  
     }
+    function PDOInsertup($thistable=null, $thisdata=null, $thisrecno = null)
+    {
+        //0.  string - $thistable will just be the table name
+        //1.  associative array - $thisdata will have associative arrayt key and values for the fields and the values,
+        $historyfields = "";
+        $historyvalues = "";
+        $sql = "INSERT INTO $thistable (";
+        $firsttime = false;
+        foreach($thisdata as $key => $value)
+        {
+            if($firsttime == false)
+            {
+                $firsttime = true;
+                $sql .= "$key";
+                
+                $historyfields = $key;
+            }
+            else
+            {
+                $sql .= ", $key";
+                $historyfields .= ", $key";
+            }
+        }
+        $sql .= ") VALUES(";
+        $firsttime = false;
+        foreach($thisdata as $key => $value)
+        {
+            if($firsttime == false)
+            {
+                $firsttime = true;
+                $sql .= ":$key";
+                
+                $historyvalues = $value;
+            }
+            else
+            {
+                $sql .= ", :$key";
+                
+                $historyvalues .= "; $value";
+            }
+        }
+        $sql .= ")";
+        try 
+        {
+            $q = $this->conn->prepare($sql);
+            foreach($thisdata as $key => $value)
+            {
+                if(is_numeric($value) && !is_float($value))
+                {
+                    $q->bindValue(":$key", $value, PDO::PARAM_INT);
+                }
+                else if(is_bool($value))
+                {
+                    $q->bindValue(":$key", $value, PDO::PARAM_BOOL);
+                }
+                else if(is_null($value) || $value == "")
+                {
+                    $q->bindValue(":$key", $value, PDO::PARAM_NULL);
+                }
+                else
+                {
+                    $q->bindValue(":$key", $value, PDO::PARAM_STR);
+                }
+            }
+            $q ->execute();
+            $insertid = $this->conn->lastInsertId();
+            
+            $thissql = "INSERT INTO history (tablename, associativerecno, action, field, value, modifiedby) VALUES(:tablename, :associativerecno, :action, :field, :value, :modifiedby)";
+            $q = $this->conn->prepare($thissql);
+            $q->bindValue(":tablename", "$thistable", PDO::PARAM_STR);
+            $q->bindValue(":associativerecno", $insertid, PDO::PARAM_INT);
+            $q->bindValue(":action", 'INSERT', PDO::PARAM_STR);
+            $q->bindValue(":field", "$historyfields", PDO::PARAM_STR);
+            $q->bindValue(":value", "$historyvalues", PDO::PARAM_STR);
+            $q->bindValue(":modifiedby", $_SESSION['employee_master_recno'], PDO::PARAM_INT);
+            $q ->execute();
+            
+            if($thistable == "flow")
+            {
+                //If we are doing INSERTS for table flow, that means we are adding new flights to flow and any flightg will come with a SERVICE ORDER.
+                //This is where we also INSERT into SERVICE ORDER table.
+                $thissosql = "INSERT INTO service_orders (foreignkey_flow_recno) VALUES(:foreignkey_flow_recno)";
+                $q = $this->conn->prepare($thissosql);
+                $q->bindValue(":foreignkey_flow_recno", $insertid, PDO::PARAM_INT);
+                $q ->execute();
+            }
+            if($thistable == "signature")
+            {
+                $thissql = "INSERT INTO history (tablename, associativerecno, action, field, value, modifiedby) VALUES(:tablename, :associativerecno, :action, :field, :value, :modifiedby)";
+                $q = $this->conn->prepare($thissql);
+                $q->bindValue(":tablename", "$thistable", PDO::PARAM_STR);
+                $q->bindValue(":associativerecno", $thisrecno, PDO::PARAM_INT);
+                $q->bindValue(":action", 'INSERT', PDO::PARAM_STR);
+                $q->bindValue(":field", "$historyfields", PDO::PARAM_STR);
+                $q->bindValue(":value", "$historyvalues", PDO::PARAM_STR);
+                $q->bindValue(":modifiedby", $_SESSION['employee_master_recno'], PDO::PARAM_INT);
+                $q ->execute();
+            }
+            if($thistable == "signatures")
+            {
+                return($insertid);
+            }
+            else
+            {
+                return('Success');
+            }
+        } 
+        catch (Exception $ex) {
+            throw $ex;
+        }  
+    }
     function PDOUpdate($thistable=null, $thisdata = null, $thiswhere = null, $thisrecno = null)
     {
         //0.  string - $thistype, INSERT, UPDATE, DELETE, QUERY

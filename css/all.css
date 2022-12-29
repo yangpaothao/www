@@ -600,6 +600,15 @@ button{
     text-align: center;
     border: solid 1px black;
 }
+.status-cancelled{
+    float: left;
+    background-color: MediumOrchid;
+    height: 100%;
+    width: 160px;
+    color: white;
+    text-align: center;
+    border: solid 1px black;
+}
 .status-delayed{
     float: left;
     background-color: darkred;

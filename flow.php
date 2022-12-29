@@ -123,6 +123,9 @@ if(count($_GET) > 0)
                             if($(obj).find(":selected").val() == "Delayed"){
                                 $("#tr"+lineno).css('background-color', 'darkred');
                             }
+                            else if($(obj).find(":selected").val() == "Cancelled"){
+                                $("#tr"+lineno).css('background-color', 'MediumOrchid');
+                            }
                             else{
                                 //Now we find out what color we should go back to by checking for the scheduled, eta, ata
                                 if($("#txtschedulearrival_"+lineno).val() != ""){
@@ -238,7 +241,8 @@ function Main()
                             "scheduledeparture" => ($rs['scheduledeparture'] != NULL) ? $rs['scheduledeparture'] : NULL);
         }
     }
-    $sql = "SELECT flow.*, so.recno as so_recno FROM flow INNER JOIN service_orders so ON flow.recno=so.foreignkey_flow_recno WHERE flow.date <= '".date('Y-m-d', strtotime($thistomorrow))."' AND  flow.isdeparted=false AND flow.isdeleted = false ORDER BY date, customer";
+    $sql = "SELECT flow.*, so.recno as so_recno FROM flow INNER JOIN service_orders so ON flow.recno=so.foreignkey_flow_recno WHERE ";
+    $sql .= "flow.date <= '".date('Y-m-d', strtotime($thistomorrow))."' AND flow.isdeparted=false AND flow.isdeleted = false ORDER BY date, customer";
     file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
     $result = $db->PDOMiniquery($sql);
 
@@ -269,6 +273,8 @@ function Main()
                         <div class="status-eta">ETA</div>
                         <div class="status-ata">ATA</div>
                         <div class="status-delayed">Parked/Delayed</div>
+                        <div class="status-cancelled">Cancelled</div>
+                        
                     </div>
                 </div>
                 <div style=" width: 100%; overflow-y: auto;">
@@ -279,10 +285,12 @@ function Main()
                                 <th style="width: 160px !important; position: sticky; top: 0px; z-index: 10;" title="Customer">Cust</th>
                                 <th style="width: 60px !important; position: sticky; top: 0px; z-index: 10;" title="Aircraft Type">A/C Type</th>
                                 <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">Flt No.</th>
+                                <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">From Station</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Arrival">SArr.</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Arrival">EArr.</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Arrival">AArr.</th>
-                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Gate</th>                                  
+                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Gate</th>  
+                                <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">To Station</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Depature">SDep.</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Departure">EDep.</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Depature">ADep.</th>
@@ -315,13 +323,13 @@ function Main()
                                             //First time we come here, this would be empty so we will not get here.  But everytime after that
                                             //if we get here, it's cuz it's a new date.  That means we want to show a date divider.?>
                                             <tr>
-                                                <td colspan="17" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                                                <td colspan="19" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
                                             </tr><?php
                                         }
                                         if($tempdate == "")
                                         {//We only come in here the first time and only 1 time.?>
                                             <tr>
-                                                <td colspan="17" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                                                <td colspan="19" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
                                             </tr><?php
                                         }
                                     }
@@ -340,7 +348,12 @@ function Main()
                                        $thisbgcolor = 'green';
                                        $thisfontcolor = 'black';
                                     }
-                                    if($rs['status'] != "")
+                                    if($rs['status'] == "Cancelled")
+                                    {
+                                       $thisbgcolor = 'MediumOrchid';
+                                       $thisfontcolor = 'white';
+                                    }
+                                    if($rs['status'] == "Delayed" || $rs['status'] == "Parked")
                                     {
                                        $thisbgcolor = 'darkred';
                                        $thisfontcolor = 'white';
@@ -350,10 +363,12 @@ function Main()
                                         <td style="height: 40px; width: 160px;"><input class="input-flows" type="text" id="txtcustomer_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['customer']?>" readonly/></td>
                                         <td style="height: 40px; width: 60px;"><input class="input-flows" type="text" id="txtactyp_<?=$i?>e" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actype']?>" readonly/></td>
                                         <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtflightnumber_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['flightnumber']?>" readonly/></td>
+                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtfromstation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['fromstation']?>" readonly/></td>                                        
                                         <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtschedulearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['schedulearrival']?>"/></td>
                                         <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['estimatearrival']?>"/></td>
                                         <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualarrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actualarrival']?>"/></td>
                                         <td style="height: 40px; width: 40px;"><input class="input-flows" type="text" id="txtgate_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['gate']?>"/></td>
+                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txttostation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['tostation']?>" readonly/></td>                                                                                
                                         <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtscheduledeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['scheduledeparture']?>"/></td>
                                         <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatedeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['estimatedeparture']?>"/></td>
                                         <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualdeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actualdeparture']?>"/></td>
@@ -371,9 +386,14 @@ function Main()
                                                 {?>
                                                     <option value="Delayed" selected>Delayed</option><?php
                                                 }
+                                                else if($rs['status'] == 'Cancelled')
+                                                {?>
+                                                    <option value="Cancelled" selected>Cancelled</option><?php
+                                                }
                                                 else
                                                 {?>
-                                                    <option value="Delayed" >Delayed</option><?php
+                                                    <option value="Delayed" >Delayed</option>
+                                                    <option value="Cancelled" >Cancelled</option><?php
                                                 }?>
                                             </select>
                                         </td>
