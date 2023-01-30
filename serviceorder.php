@@ -559,7 +559,7 @@ function Main()
         $load_headers::Load_Header_Logo_Main();
         
         $sql = "SELECT so.*, flow.recno as flow_recno, flow.customer, flow.actype, flow.flightnumber, flow.gate, flow.date, flow.engineers, flow.mechanics, flow.technicians, ";
-        $sql .= "flow.schedulearrival, flow.estimatearrival, flow.actualarrival, flow.estimatedeparture, flow.scheduledeparture, ";
+        $sql .= "flow.schedulearrival, flow.estimatearrival, flow.actualarrival, flow.estimatedeparture, flow.scheduledeparture, flow.fromstation, flow.tostation, ";
         $sql .= "flow.actualdeparture, s.signature FROM service_orders so INNER JOIN flow ";
         $sql .= "ON flow.recno = so.foreignkey_flow_recno LEFT JOIN signatures s ON so.recno = s.so_foreign_key WHERE so.recno='".$_POST['recno']."' AND so.isdeleted = false";
         $result = $db->PDOMiniquery($sql);?>        
@@ -596,33 +596,53 @@ function Main()
                                 </div>
                             </td>
                         </tr>
+                        <tr><td class="tbl-order-lbl">
+                                <div class="div-service-order-data-container">
+                                    <div class="div-service-order-emplbl">From:</div>
+                                    <div class="div-service-order-empinput"><?= $rs['fromstation'] ?></div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr><td class="tbl-order-lbl">
+                                <div class="div-service-order-data-container">
+                                    <div class="div-service-order-emplbl">To:</div>
+                                    <div class="div-service-order-empinput"><?= $rs['tostation'] ?></div>
+                                </div>
+                            </td>
+                        </tr>
                         <tr><?php
-                            $thisdepttime = "";
-                            $thisarrtime = "";
+                            $thistempdepttime = "";
+                            $thistemparrtime = "";
                             if(!is_null($rs['actualarrival']))
                             {
-                                $thisarrtime = $rs['actualarrival'];
+                                $thistemparrtime = $rs['actualarrival'];
                             }
                             else if(!is_null($rs['estimatearrival']))
                             {
-                                $thisarrtime = $rs['estimatearrival'];
+                                $thistemparrtime = $rs['estimatearrival'];
                             }
                             else
                             {
-                                $thisarrtime = $rs['schedulearrival'];
+                                $thistemparrtime = $rs['schedulearrival'];
                             }
+                            $explodead = explode(" ", $thistemparrtime);
+                            $thisdepttime = date('H:i', strtotime($explodead[1]));
+                            
                             if(!is_null($rs['actualdeparture']))
                             {
-                                $thisdepttime = $rs['actualdeparture'];
+                                $thistempdepttime = $rs['actualdeparture'];
                             }
                             else if(!is_null($rs['estimatedeparture']))
                             {
-                                $thisdepttime = $rs['estimatedeparture'];
+                                $thistempdepttime = $rs['estimatedeparture'];
                             }
                             else
                             {
-                                $thisdepttime = $rs['scheduledeparture'];
+                                $thistempdepttime = $rs['scheduledeparture'];
                             }
+                            $explodead = explode(" ", $thistempdepttime);
+                            $thisdepttime = date('H:i', strtotime($explodead[1]));
+                            
                             $isreadonly = "";
                             if(!is_null($rs['completedby']))
                             {

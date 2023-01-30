@@ -1,193 +1,212 @@
 <?php
     echo getAPIschedule();
-    function getAPIschedule()
+    $date1 = "2023-01-04T00:00:00Z";
+    $date2 = "2023-01-04T23:59:59Z";
+    echo $date1.'--- in else <br>';
+    echo $date2.'<br>';    
+    getAPIschedulearrival($date1, $date2, $pageno);
+    getAPIscheduledeparture($date1, $date2, $pageno);
+    function getAPIschedulearrival($startdate, $enddate, $pageno)
     {
-        require_once("./page.php");
-        require_once("./pdocon.php");
+        global $db;
         /*Flight Aware only allows for 2 future days schedule search.  Can probably get farther out dates but will cost more
          */
         $apiKey = "gAQm6Gz1h4nNN23sO7nKitfq1OMczW53";
         $url = "https://aeroapi.flightaware.com/aeroapi/";
 
-        $db = new PDOCON();
-        $thisday = date('m/d/Y', strtotime('+1 day'));
-        $thistomorrow = date('m/d/Y', strtotime('+2 day'));
-        /*
-        $sql = "SELECT recno, customer, icaocode FROM customer_master WHERE isactive = true";
-        $result = $db->PDOMiniquery($sql);
-        $custarray = [];
-        if($result)
-        {
-            foreach($result as $rs)
-            {
-                $custarray[] = $rs['icaocode']; //Should have at least 1
-            }
-        }*/
         $thiscustomer = "Qantas Airways Limited";
         $thisicao = "QFA";
         //We will start to get the last availabler allowable date schedule, for now 2 days in advance, that way we
         //do not get the data we already got which would be today and tomorrow.
         $queryParams = array(
-
-            'start' => date('Y-m-d', strtotime($thistomorrow)),
-            'end' => date('Y-m-d', strtotime($thistomorrow))
+            'origin' => 'KLAX',
+            'airline' => 'QFA',
+            'max_pages' => $pageno
         );
-        //At this point we should get an array = ['flight1', 'flight2',...,'flightn'];
+        //curl -X GET "https://aeroapi.flightaware.com/aeroapi/schedules/2022-12-29/2023-01-19?origin=KLAX&airline=QFA&max_pages=2"
 
-        //$thisflight = 'CPA520';
-        //$url = $url . 'flights/' . $thisflight . '?' . http_build_query($queryParams);
-
-
-        //$url = $url . 'SearchBirdseyeInFlight/' .$explodeident.'?'. http_build_query($queryParams);
-
-        $url = "https://aeroapi.flightaware.com/aeroapi/operators/$thisicao/flights?". http_build_query($queryParams);
-        //echo $url;
+        $url = "https://aeroapi.flightaware.com/aeroapi/schedules/$startdate/$enddate?".http_build_query($queryParams);
+        echo $url."<br>";
         //return(false);
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $headers = array(
-        "Accept: application/json; charset=UTF-8",
-        "x-apikey: $apiKey",
+            "Accept: application/json; charset=UTF-8",
+            "x-apikey: $apiKey",
         );
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        //$resp = curl_exec($curl);
+        $resp = curl_exec($curl);
+        echo $resp;
         curl_close($curl);
-        $tempjson = '{
-            "scheduled": [
-              {
-                "ident": "QFA940",
-                "ident_icao": "QFA940",
-                "ident_iata": "QF940",
-                "fa_flight_id": "QFA940-1671960960-schedule-0647",
-                "operator": "QFA",
-                "operator_icao": "QFA",
-                "operator_iata": "QF",
-                "flight_number": "940",
-                "registration": null,
-                "atc_ident": null,
-                "inbound_fa_flight_id": null,
-                "codeshares": [
-                  "ANZ7372",
-                  "FJI5275",
-                  "UAE5652"
-                ],
-                "codeshares_iata": [
-                  "NZ7372",
-                  "FJ5275",
-                  "EK5652"
-                ],
-                "blocked": false,
-                "diverted": false,
-                "cancelled": true,
-                "position_only": false,
-                "origin": {
-                  "code": "YPPH",
-                  "code_icao": "YPPH",
-                  "code_iata": "PER",
-                  "code_lid": null,
-                  "timezone": "Australia/Perth",
-                  "name": "Perth Int",
-                  "city": "Perth",
-                  "airport_info_url": "/airports/YPPH"
-                },
-                "destination": {
-                  "code": "YBBN",
-                  "code_icao": "YBBN",
-                  "code_iata": "BNE",
-                  "code_lid": null,
-                  "timezone": "Australia/Brisbane",
-                  "name": "Brisbane",
-                  "city": "Brisbane",
-                  "airport_info_url": "/airports/YBBN"
-                },
-                "departure_delay": 3000,
-                "arrival_delay": 3000,
-                "filed_ete": 15000,
-                "scheduled_out": "2022-12-27T09:25:00Z",
-                "estimated_out": "2022-12-27T10:15:00Z",
-                "actual_out": null,
-                "scheduled_off": "2022-12-27T09:35:00Z",
-                "estimated_off": "2022-12-27T10:25:00Z",
-                "actual_off": null,
-                "scheduled_on": "2022-12-27T13:45:00Z",
-                "estimated_on": null,
-                "actual_on": null,
-                "scheduled_in": "2022-12-27T13:55:00Z",
-                "estimated_in": "2022-12-27T14:45:00Z",
-                "actual_in": null,
-                "progress_percent": 100,
-                "status": "Cancelled",
-                "aircraft_type": "B738 ",
-                "route_distance": 2244,
-                "filed_airspeed": 469,
-                "filed_altitude": null,
-                "route": null,
-                "baggage_claim": "2",
-                "seats_cabin_business": 12,
-                "seats_cabin_coach": 162,
-                "seats_cabin_first": 0,
-                "gate_origin": "14",
-                "gate_destination": null,
-                "terminal_origin": "4",
-                "terminal_destination": "D",
-                "type": "Airline"
-              }
-            ]
-          }';
-        //$thisjson = json_decode($resp);
-        $thisjson = json_decode($tempjson, true);
+
+        $thisjson = json_decode($resp, true);
         $bigarrayschedule = [];
         $bigarrayflow = [];
+        $temparray = [];
         $i=0;
+        $thistable = "flight_schedule";
         foreach($thisjson['scheduled'] as $val)
         {
             if(is_array($val))
             {
+                $sqlqry = "SELECT recno, dates FROM $thistable WHERE customer = 'Qantas Airways Limited' AND flightnumber= '".substr($thisjson['scheduled'][$i]['ident'], 3)."' ";
+                $sqlqry .= "AND fromstation = '".$thisjson['scheduled'][$i]['origin']."'";
+                //echo $sqlqry;
+                $resultqry = $db->PDOMiniquery($sqlqry);
+                if($db->PDORowcount($resultqry) == 0)
+                {
+                    $sqlins = "INSERT INTO $thistable (customer, actype, flightnumber, fromstation, schedulearrival, tostation, scheduledeparture, dates) VALUES(";
+                    $sqlins .= "'Qantas Airways Limited', ";
+                    $sqlins .= "'".$thisjson['scheduled'][$i]['aircraft_type']."', ";
+                    $sqlins .= "'".substr($thisjson['scheduled'][$i]['ident'], 3)."', ";
+                    $sqlins .= "'".$thisjson['scheduled'][$i]['origin']."', ";
+                    $sqlins .= "'".date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."', ";
+                    $sqlins .= "'".$thisjson['scheduled'][$i]['destination']."', ";
+                    $sqlins .= "'".date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_out']))."', ";
+                    $sqlins .= "'".date('Y/m/d', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."')";
+                    //echo $sqlins.'<br>';
+                    $db->PDOMiniquery($sqlins);
+                }
+                else
+                {
+                    foreach($resultqry as $rs)
+                    {
+                        $sqlupdate = "UPDATE $thistable SET dates = CONCAT_WS(',', dates, '".date('Y/m/d', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."')";
+                        $sqlupdate .= "WHERE recno = ".$rs['recno']." AND dates NOT LIKE '%".date('Y/m/d', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."%'";
+                        $db->PDOMiniquery($sqlupdate);
+                    }
+                }
+                /*
                 $temparray['customer'] = "Qantas Airways Limited";
-                $temparray['flightnumber'] =  $thisjson['scheduled'][0]['flight_number'];
-                $temparray['actype'] =  $thisjson['scheduled'][0]['aircraft_type'];
-                $temparray['dates'] = date('m/d/Y', strtotime($thisjson['scheduled'][0]['scheduled_in']));            //2022-12-27T13:55:00Z
-                $temparray['fromstation'] =  $thisjson['scheduled'][0]['origin']['code_icao'];
-                $temparray['schedulearrival'] = date('H:i:s', strtotime($thisjson['scheduled'][0]['scheduled_in']));
-                $temparray['tostation'] =  $thisjson['scheduled'][0]['destination']['code_icao'];
-                $temparray['scheduledepature'] = date('H:i:s', strtotime($thisjson['scheduled'][0]['scheduled_out']));
+                $thisident = $thisjson['scheduled'][$i]['ident'];
+                $temparray['flightnumber'] = substr($thisident, 3);
+                $temparray['actype'] =  $thisjson['scheduled'][$i]['aircraft_type'];
+                $temparray['dates'] = date('m/d/Y', strtotime($thisjson['scheduled'][$i]['scheduled_in']));            //2022-12-27T13:55:00Z
+                $temparray['fromstation'] =  $thisjson['scheduled'][$i]['origin'];
+                $temparray['scheduledepature'] = date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_out']));                
+                $temparray['tostation'] =  $thisjson['scheduled'][$i]['destination'];
+                $temparray['schedulearrival'] = date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_in']));
                 $bigarrayschedule[] = $temparray;
-
-                $temparray['estimatearrival'] = date('H:i:s', strtotime($thisjson['scheduled'][0]['estimated_in']));
-                $temparray['estimatedeparture'] = date('H:i:s', strtotime($thisjson['scheduled'][0]['estimated_out']));
-                $temparray['status'] =  $thisjson['scheduled'][0]['status'];
-                $bigarrayflow[] = $temparray;
+                 */
             }
             $i++;
         }
-        //Now that we have an array with our data, we will now iterate through it and update/insert
-
+        /*
         foreach($bigarrayschedule as $key => $val)
         {
-            $thistable = "flight_schedule";
-            /*
+            $thisdata = $val;
+
             foreach($val as $key2 => $val2)
             {
                 echo $key2." => ".$val2."<br>";
             }
             echo "<br>";
-            */
-             
-        }
-        foreach($bigarrayflow as $key => $val)
+
+        }*/
+    }
+    function getAPIscheduledeparture($startdate, $enddate, $pageno)
+    {
+        global $db;
+        /*Flight Aware only allows for 2 future days schedule search.  Can probably get farther out dates but will cost more
+         */
+        $apiKey = "gAQm6Gz1h4nNN23sO7nKitfq1OMczW53";
+        $url = "https://aeroapi.flightaware.com/aeroapi/";
+
+        $thiscustomer = "Qantas Airways Limited";
+        $thisicao = "QFA";
+        //We will start to get the last availabler allowable date schedule, for now 2 days in advance, that way we
+        //do not get the data we already got which would be today and tomorrow.
+        $queryParams = array(
+            'origin' => 'KLAX',
+            'airline' => 'QFA',
+            'max_pages' => $pageno
+        );
+        //curl -X GET "https://aeroapi.flightaware.com/aeroapi/schedules/2022-12-29/2023-01-19?origin=KLAX&airline=QFA&max_pages=2"
+
+        $url = "https://aeroapi.flightaware.com/aeroapi/schedules/$startdate/$enddate?".http_build_query($queryParams);
+        echo $url."<br>";
+        //return(false);
+        $curl = curl_init($url);
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        $headers = array(
+            "Accept: application/json; charset=UTF-8",
+            "x-apikey: $apiKey",
+        );
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        $resp = curl_exec($curl);
+        echo $resp;
+        curl_close($curl);
+
+        $thisjson = json_decode($resp, true);
+        $bigarrayschedule = [];
+        $bigarrayflow = [];
+        $temparray = [];
+        $i=0;
+        $thistable = "flight_schedule";
+        foreach($thisjson['scheduled'] as $val)
         {
-            
-            /*
+            if(is_array($val))
+            {
+                $sqlqry = "SELECT recno, dates FROM $thistable WHERE customer = 'Qantas Airways Limited' AND flightnumber= '".substr($thisjson['scheduled'][$i]['ident'], 3)."' ";
+                $sqlqry .= "AND fromstation = '".$thisjson['scheduled'][$i]['origin']."'";
+                //echo $sqlqry;
+                $resultqry = $db->PDOMiniquery($sqlqry);
+                if($db->PDORowcount($resultqry) == 0)
+                {
+                    $sqlins = "INSERT INTO $thistable (customer, actype, flightnumber, fromstation, schedulearrival, tostation, scheduledeparture, dates) VALUES(";
+                    $sqlins .= "'Qantas Airways Limited', ";
+                    $sqlins .= "'".$thisjson['scheduled'][$i]['aircraft_type']."', ";
+                    $sqlins .= "'".substr($thisjson['scheduled'][$i]['ident'], 3)."', ";
+                    $sqlins .= "'".$thisjson['scheduled'][$i]['origin']."', ";
+                    $sqlins .= "'".date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."', ";
+                    $sqlins .= "'".$thisjson['scheduled'][$i]['destination']."', ";
+                    $sqlins .= "'".date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_out']))."', ";
+                    $sqlins .= "'".date('Y/m/d', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."')";
+                    //echo $sqlins.'<br>';
+                    $db->PDOMiniquery($sqlins);
+                }
+                else
+                {
+                    foreach($resultqry as $rs)
+                    {
+                        $sqlupdate = "UPDATE $thistable SET dates = CONCAT_WS(',', dates, '".date('Y/m/d', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."')";
+                        $sqlupdate .= "WHERE recno = ".$rs['recno']." AND dates NOT LIKE '%".date('Y/m/d', strtotime($thisjson['scheduled'][$i]['scheduled_in']))."%'";
+                        $db->PDOMiniquery($sqlupdate);
+                    }
+                }
+                /*
+                $temparray['customer'] = "Qantas Airways Limited";
+                $thisident = $thisjson['scheduled'][$i]['ident'];
+                $temparray['flightnumber'] = substr($thisident, 3);
+                $temparray['actype'] =  $thisjson['scheduled'][$i]['aircraft_type'];
+                $temparray['dates'] = date('m/d/Y', strtotime($thisjson['scheduled'][$i]['scheduled_in']));            //2022-12-27T13:55:00Z
+                $temparray['fromstation'] =  $thisjson['scheduled'][$i]['origin'];
+                $temparray['scheduledepature'] = date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_out']));                
+                $temparray['tostation'] =  $thisjson['scheduled'][$i]['destination'];
+                $temparray['schedulearrival'] = date('H:i:s', strtotime($thisjson['scheduled'][$i]['scheduled_in']));
+                $bigarrayschedule[] = $temparray;
+                 */
+            }
+            $i++;
+        }
+        /*
+        foreach($bigarrayschedule as $key => $val)
+        {
+            $thisdata = $val;
+
             foreach($val as $key2 => $val2)
             {
                 echo $key2." => ".$val2."<br>";
             }
             echo "<br>";
-            */
-        }
+
+        }*/
     }
     
 ?>

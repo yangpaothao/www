@@ -187,7 +187,7 @@ function UpdateFlow()
     }
     if($realfield == "isdeparted")
     {
-        $thistime = date('H:i');
+        $thistime = date('Y-m-d H:i:s'); //Must now be in format of Y-m-d H:i:s
         $thisdata = array($realfield => $thisvalue, 'actualdeparture' => $thistime); 
     }
     if($realfield == "isdeleted")
@@ -199,7 +199,7 @@ function UpdateFlow()
         $thisdata = array($realfield => ($thisvalue != 'Select' ? $thisvalue : NULL));
     }
     $thiswhere = array("recno" => $_POST['recno']);
-    file_put_contents("./dodebug/debug.txt", "this recno: ".$_POST['recno']." ---this value: ".$thisvalue, FILE_APPEND);
+    //file_put_contents("./dodebug/debug.txt", "this recno: ".$_POST['recno']." ---this value: ".$thisvalue, FILE_APPEND);
     $result = $db->PDOUpdate($thistable, $thisdata, $thiswhere, $_POST['recno']);
     if(isset($result))
     {
@@ -224,26 +224,22 @@ function Main()
         //$sql .= "AND (fs.dates LIKE '%$tempdatearray[$i]%' AND fs.isdeleted = false AND f.date = '".date('Y-m-d', strtotime($tempdatearray[$i]))."')";
         
         $sql = "SELECT fs.* FROM flight_schedule fs LEFT OUTER JOIN flow f ON fs.customer = f.customer AND fs.actype = f.actype AND fs.flightnumber = f.flightnumber ";
-        $sql .= "WHERE fs.dates LIKE '%$tempdatearray[$i]%' AND fs.isdeleted = false AND f.date IS NULL";
+        $sql .= "WHERE fs.dates LIKE '%".date('Y/m/d', strtotime($tempdatearray[$i]))."%' AND fs.isdeleted = false AND f.date IS NULL";
         //file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
         $result = $db->PDOMiniquery($sql);
         foreach($result as $rs)
         {
             $thistable = "flow";
             $thisdata = array("customer" => $rs['customer'], "actype" => $rs['actype'], "flightnumber" => $rs['flightnumber'], "date" => date('Y-m-d', strtotime($tempdatearray[$i])),
-                            "schedulearrival" => ($rs['schedulearrival'] != NULL) ? $rs['schedulearrival'] : NULL, 
-                            "scheduledeparture" => ($rs['scheduledeparture'] != NULL) ? $rs['scheduledeparture'] : NULL);
+                            "schedulearrival" => ($rs['schedulearrival'] != NULL ? $rs['schedulearrival'] : NULL), 
+                            "scheduledeparture" => ($rs['scheduledeparture'] != NULL ? $rs['scheduledeparture'] : NULL),
+                            "fromstation" => ($rs['fromstation'] != NULL ? $rs['fromstation'] : NULL), "tostation" => ($rs['tostation'] != NULL ? $rs['tostation'] : NULL));
             $db->PDOInsert($thistable, $thisdata);
-            
-            $thistable = "service_orders";
-            $thisdata = array("customer" => $rs['customer'], "actype" => $rs['actype'], "flightnumber" => $rs['flightnumber'], "date" => date('Y-m-d', strtotime($tempdatearray[$i])),
-                            "schedulearrival" => ($rs['schedulearrival'] != NULL) ? $rs['schedulearrival'] : NULL, 
-                            "scheduledeparture" => ($rs['scheduledeparture'] != NULL) ? $rs['scheduledeparture'] : NULL);
         }
     }
     $sql = "SELECT flow.*, so.recno as so_recno FROM flow INNER JOIN service_orders so ON flow.recno=so.foreignkey_flow_recno WHERE ";
     $sql .= "flow.date <= '".date('Y-m-d', strtotime($thistomorrow))."' AND flow.isdeparted=false AND flow.isdeleted = false ORDER BY date, customer";
-    file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
+    //file_put_contents("./dodebug/debug.txt", $sql."===", FILE_APPEND);
     $result = $db->PDOMiniquery($sql);
 
     $thistable = "note";
@@ -285,19 +281,20 @@ function Main()
                                 <th style="width: 160px !important; position: sticky; top: 0px; z-index: 10;" title="Customer">Cust</th>
                                 <th style="width: 60px !important; position: sticky; top: 0px; z-index: 10;" title="Aircraft Type">A/C Type</th>
                                 <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">Flt No.</th>
+                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Dep. Gate</th>
                                 <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">From Station</th>
-                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Arrival">SArr.</th>
-                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Arrival">EArr.</th>
-                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Arrival">AArr.</th>
-                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Gate</th>  
-                                <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">To Station</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Depature">SDep.</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Departure">EDep.</th>
                                 <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Depature">ADep.</th>
+                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Arr. Gate</th>  
+                                <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">To Station</th>
+                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Arrival">SArr.</th>
+                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Arrival">EArr.</th>
+                                <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Arrival">AArr.</th>
                                 <th style="width: 300px !important; position: sticky; top: 0px; z-index: 10;">Engineer</th>
                                 <th style="width: 300px !important; position: sticky; top: 0px; z-index: 10;">Note</th>
                                 <th style="width: 60px; position: sticky; top: 0px;">Status</th>
-                                <th style="width: 60px; position: sticky; top: 0px;">Service Order</th>
+                                <th style="display: none; width: 60px; position: sticky; top: 0px;">Service Order</th>
                                 <th style="width: 60px; position: sticky; top: 0px;">Depart</th><?php
                                 if(in_array('Delete', $_SESSION['thisauth']))
                                 {?>
@@ -357,21 +354,60 @@ function Main()
                                     {
                                        $thisbgcolor = 'darkred';
                                        $thisfontcolor = 'white';
+                                    }
+                                    
+                                    $tempsa = $rs['schedulearrival']; //2023-01-03 19:34:00
+                                    if($rs['schedulearrival'] != "")
+                                    {
+                                        $explodesa = explode(" ", $rs['schedulearrival']);
+                                        $tempsa = date('H:i', strtotime($explodesa[1]));
+                                    }  
+                                    $tempea = $rs['estimatearrival']; 
+                                    if($rs['estimatearrival'] != "")
+                                    {
+                                        $explodeea = explode(" ", $rs['estimatearrival']);
+                                        $tempea = date('H:i', strtotime($explodeea[1]));
+                                    }
+                                    $tempaa = $rs['actualarrival'];
+                                    if($rs['actualarrival'] != "")
+                                    {
+                                        $explodeaa = explode(" ", $rs['actualarrival']);
+                                        $tempaa = date('H:i', strtotime($explodeaa[1]));
+                                    }
+                                    
+                                    $tempsd = $rs['scheduledeparture'];
+                                    if($rs['scheduledeparture'] != "")
+                                    {
+                                        $explodesd = explode(" ", $rs['scheduledeparture']);
+                                        $tempsd = date('H:i', strtotime($explodesd[1]));
+                                    }
+                                    $temped = $rs['estimatedeparture'];
+                                    if($rs['estimatedeparture'] != "")
+                                    {
+                                        $explodeed = explode(" ", $rs['estimatedeparture']);
+                                        $temped = date('H:i', strtotime($explodeed[1]));
+                                    }
+                                    $tempad = $rs['actualdeparture'];
+                                    if($rs['actualdeparture'] != "")
+                                    {
+                                        $explodead = explode(" ", $rs['actualdeparture']);
+                                        $tempad = date('H:i', strtotime($explodead[1]));
                                     }?>
                                     <tr id="tr<?=$i?>" style="background-color: <?= $thisbgcolor?>; color: <?= $thisfontcolor ?>;">
                                         <td class="tdnumbered" style="height: 40px; width: 20px !important; color: <?= $thisfontcolor ?>;"><?= $i ?></td>
                                         <td style="height: 40px; width: 160px;"><input class="input-flows" type="text" id="txtcustomer_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['customer']?>" readonly/></td>
                                         <td style="height: 40px; width: 60px;"><input class="input-flows" type="text" id="txtactyp_<?=$i?>e" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actype']?>" readonly/></td>
                                         <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtflightnumber_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['flightnumber']?>" readonly/></td>
-                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtfromstation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['fromstation']?>" readonly/></td>                                        
-                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtschedulearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['schedulearrival']?>"/></td>
-                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['estimatearrival']?>"/></td>
-                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualarrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actualarrival']?>"/></td>
+                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtfromstation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['departuregate']?>" readonly/></td>
+                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtfromstation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['fromstation']?>" readonly/></td>                                                                           
+                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtscheduledeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempsd?>" readonly/></td>
+                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatedeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$temped?>" readonly/></td>
+                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualdeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempad?>" readonly/></td>
                                         <td style="height: 40px; width: 40px;"><input class="input-flows" type="text" id="txtgate_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['gate']?>"/></td>
-                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txttostation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['tostation']?>" readonly/></td>                                                                                
-                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtscheduledeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['scheduledeparture']?>"/></td>
-                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatedeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['estimatedeparture']?>"/></td>
-                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualdeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actualdeparture']?>"/></td>
+                                        <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txttostation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['tostation']?>" readonly/></td> 
+                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtschedulearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempsa?>" readonly/></td>
+                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempea?>" readonly/></td>
+                                        <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualarrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempaa?>" readonly/></td>
                                         <td style="height: 40px; width: 300px !important; color: black;">
                                             <div class="flow-slt-engineer-wrapper"><?php
                                                 $thisrecno = $rs['recno'];
@@ -397,7 +433,7 @@ function Main()
                                                 }?>
                                             </select>
                                         </td>
-                                        <td style="height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Service Order" onclick="toServiceorder(<?=$rs['so_recno'];?>);"><?=$rs['so_recno'];?></button></td>
+                                        <td style="display: none; height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Service Order" onclick="toServiceorder(<?=$rs['so_recno'];?>);"><?=$rs['so_recno'];?></button></td>
                                         <td style="height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Depart" onclick="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);">Depart</button></td><?php
                                         if(in_array('Delete', $_SESSION['thisauth']))
                                         {?>

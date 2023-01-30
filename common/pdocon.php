@@ -431,7 +431,7 @@ class PDOCON {
             }
             $sql = rtrim($sql, " AND ");
         }
-        file_put_contents("./dodebug/debug.txt", 'update: '.$sql, FILE_APPEND);
+        //file_put_contents("./dodebug/debug.txt", 'update: '.$sql, FILE_APPEND);
          try {
             $q = $this->conn->prepare($sql);
             foreach($thisdata as $key => $value)
@@ -502,6 +502,12 @@ class PDOCON {
     {
         //echo $sql;
         $q = $this->conn->query($sql, PDO::FETCH_ASSOC);
+        return($q);
+    }
+    function PDOMiniinsert($sql, $recno=null)
+    {
+        //echo $sql;
+        $q = $this->conn->exec($sql);
         return($q);
     }
     function PDORowcount($result)

@@ -1,7 +1,8 @@
 <?php
 session_start();
 //date_default_timezone_set('America/Chicago'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
-date_default_timezone_set('Australia/Sydney'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
+//date_default_timezone_set('Australia/Sydney'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
+date_default_timezone_set('America/Los_Angeles'); //THIS MAKES THE WEBSITE USE THIS TIMEZONE AS THE TIME.
 $temp_page = filter_input(INPUT_SERVER, 'PHP_SELF'); // will look like /index.php or /somedir/somepage.php
 $explode_page = explode("/", $temp_page); //This variable will now be an array and the page name is the last element of this array
 $this_page = end($explode_page);
@@ -191,7 +192,7 @@ class Page_Loader {
                                 <li onclick="doProfile();" class="li-menu-sub">Profile</li>
                                 <li href="#" onclick="manageAnnouncement();" class="li-menu-sub">Manage Announcement</li>
                                 <li href="#" onclick="manageImportant();" class="li-menu-sub">Manage Important</li>
-                                <li href="#" onclick="manageServiceorders();" class="li-menu-sub">Manage Service Orders</li>
+                                <li style="display: none;" href="#" onclick="manageServiceorders();" class="li-menu-sub">Manage Service Orders</li>
                                 <li href="#" onclick="manageFlight();" class="li-menu-sub">Manage Flight Schedule</li><?php                                
                                 if(in_array('Write', $_SESSION['thisauth']) || in_array('Modify', $_SESSION['thisauth']) || in_array('Delete', $_SESSION['thisauth']))
                                 {?> 
