@@ -8,14 +8,14 @@
     $thiscustomer = "Qantas Airways Limited";
     $thisicao = "QFA";
     $origindestination = "KLAX";
-    $pageno = 10;
+    $pageno = 20;
     $date1 = "";
     $date2 = "";
     $shift = 0;
     //Wer will get 1 record only from this sql.
     $sqldt = "SELECT * FROM date_tracker WHERE isRan = false ORDER BY date, shift limit 1";
     $rsdt = $db->PDOMiniquery($sqldt);
-    
+
     /*
      //We use this block of code to filled in initial 30 days worth of dates for table date_tracker, disabled after filled
     $insertdate1 = date('Y-m-d');
@@ -92,7 +92,7 @@
     function Checkdates($curdate, $futuredays, $db)
     {
         $thisdatel = "";   
-        file_put_contents("../dodebug/debug.txt", "What is this curdate? ".$curdate."\n", FILE_APPEND);
+        //file_put_contents("../dodebug/debug.txt", "What is this curdate? ".$curdate."\n", FILE_APPEND);
         //Now we need to insert 1 more day to the table
         $sqldtl = "SELECT * FROM date_tracker WHERE isRan = false ORDER BY recno DESC limit 1 ";
         $rsdtl = $db->PDOMiniquery($sqldtl);

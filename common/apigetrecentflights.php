@@ -4,7 +4,7 @@
     //NOTE:  IF REDO, CLEAR FLOW, FLIGHT_SCHEDULE AND SERVICE_ORDER TO RESET THE SYSTEM
     $db = new PDOCON();
     $userlogin = "yangpaothao";
-    $apiKey = "967a59a2413a23840e6c83fbdc57a08b67923d88";
+    $apiKey = "uAus6uNDRfjABJGGQY5GyxtTQguoEelg";
     $thiscustomer = "Qantas Airways Limited";
     $thisicao = "QFA";
     $origindestination = "KLAX";

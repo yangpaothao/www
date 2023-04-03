@@ -1108,19 +1108,25 @@ function SearchFororders()
                         <th style="width: 160px !important; position: sticky; top: 0px; z-index: 10;" title="Customer">Cust</th>
                         <th style="width: 60px !important; position: sticky; top: 0px; z-index: 10;" title="Aircraft Type">A/C Type</th>
                         <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">Flt No.</th>
-                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Arrival">SArr.</th>
-                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Arrival">EArr.</th>
-                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Arrival">AArr.</th>
-                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Gate</th>                                  
+                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Dep. Gate</th>
+                        <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">From Station</th>
                         <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Depature">SDep.</th>
                         <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Departure">EDep.</th>
                         <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Depature">ADep.</th>
+                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;">Arr. Gate</th>  
+                        <th style="width: 50px; position: sticky; top: 0px; z-index: 10;" title="Flight Number">To Station</th>
+                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Schedule Arrival">SArr.</th>
+                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Estimate Arrival">EArr.</th>
+                        <th style="width: 40px; position: sticky; top: 0px; z-index: 10;" title="Actual Arrival">AArr.</th>
                         <th style="width: 300px !important; position: sticky; top: 0px; z-index: 10;">Engineer</th>
                         <th style="width: 300px !important; position: sticky; top: 0px; z-index: 10;">Note</th>
                         <th style="width: 60px; position: sticky; top: 0px;">Status</th>
-                        <th style="width: 60px; position: sticky; top: 0px;">Service Order</th>
-                        <th style="width: 60px; position: sticky; top: 0px;">Depart</th>
-                        <th style="width: 60px; position: sticky; top: 0px;">Delete</th>
+                        <th style="display: none; width: 60px; position: sticky; top: 0px;">Service Order</th>
+                        <th style="width: 60px; position: sticky; top: 0px;">Depart</th><?php
+                        if(in_array('Delete', $_SESSION['thisauth']))
+                        {?>
+                            <th style="width: 60px; position: sticky; top: 0px;">Delete</th><?php
+                        }?>
                     </tr>
                 </thead>
                 <tbody><?php
@@ -1141,22 +1147,20 @@ function SearchFororders()
                                     //First time we come here, this would be empty so we will not get here.  But everytime after that
                                     //if we get here, it's cuz it's a new date.  That means we want to show a date divider.?>
                                     <tr>
-                                        <td colspan="17" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                                        <td colspan="19" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
                                     </tr><?php
                                 }
                                 if($tempdate == "")
                                 {//We only come in here the first time and only 1 time.?>
                                     <tr>
-                                        <td colspan="17" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
+                                        <td colspan="19" style="text-align: center; font-weight: bold; font-size: 1.2em; background-color: #181818; color: white; height: 40px;"><?= date('d M y', strtotime($curdate));?></td>
                                     </tr><?php
                                 }
                             }
                             $tempdate = $curdate;
-                            if($rs['schedulearrival'] != "")
-                            {
-                               $thisbgcolor = 'white';
-                               $thisfontcolor = 'Black'; 
-                            }
+                            $thisbgcolor = 'white';
+                            $thisfontcolor = 'Black'; 
+
                             if($rs['estimatearrival'] != "")
                             {
                                $thisbgcolor = 'yellow';
@@ -1167,46 +1171,100 @@ function SearchFororders()
                                $thisbgcolor = 'green';
                                $thisfontcolor = 'black';
                             }
-                            if($rs['status'] != "")
+                            if($rs['status'] == "Cancelled")
+                            {
+                               $thisbgcolor = 'MediumOrchid';
+                               $thisfontcolor = 'white';
+                            }
+                            if($rs['status'] == "Delayed" || $rs['status'] == "Parked")
                             {
                                $thisbgcolor = 'darkred';
                                $thisfontcolor = 'white';
+                            }
+
+                            $tempsa = $rs['schedulearrival']; //2023-01-03 19:34:00
+                            if($rs['schedulearrival'] != "")
+                            {
+                                $explodesa = explode(" ", $rs['schedulearrival']);
+                                $tempsa = date('H:i', strtotime($explodesa[1]));
+                            }  
+                            $tempea = $rs['estimatearrival']; 
+                            if($rs['estimatearrival'] != "")
+                            {
+                                $explodeea = explode(" ", $rs['estimatearrival']);
+                                $tempea = date('H:i', strtotime($explodeea[1]));
+                            }
+                            $tempaa = $rs['actualarrival'];
+                            if($rs['actualarrival'] != "")
+                            {
+                                $explodeaa = explode(" ", $rs['actualarrival']);
+                                $tempaa = date('H:i', strtotime($explodeaa[1]));
+                            }
+
+                            $tempsd = $rs['scheduledeparture'];
+                            if($rs['scheduledeparture'] != "")
+                            {
+                                $explodesd = explode(" ", $rs['scheduledeparture']);
+                                $tempsd = date('H:i', strtotime($explodesd[1]));
+                            }
+                            $temped = $rs['estimatedeparture'];
+                            if($rs['estimatedeparture'] != "")
+                            {
+                                $explodeed = explode(" ", $rs['estimatedeparture']);
+                                $temped = date('H:i', strtotime($explodeed[1]));
+                            }
+                            $tempad = $rs['actualdeparture'];
+                            if($rs['actualdeparture'] != "")
+                            {
+                                $explodead = explode(" ", $rs['actualdeparture']);
+                                $tempad = date('H:i', strtotime($explodead[1]));
                             }?>
                             <tr id="tr<?=$i?>" style="background-color: <?= $thisbgcolor?>; color: <?= $thisfontcolor ?>;">
-                                <td class="tdnumbered" style="height: 40px; width: 20px !important; color: <?= $thisfontcolor ?>;"><?= $i ?></td>
+                                <td class="tdnumbered" style="height: 40px; width: 20px !important; color: <?= $thisfontcolor ?>; text-align: right;"><?= $i ?></td>
                                 <td style="height: 40px; width: 160px;"><input class="input-flows" type="text" id="txtcustomer_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['customer']?>" readonly/></td>
                                 <td style="height: 40px; width: 60px;"><input class="input-flows" type="text" id="txtactyp_<?=$i?>e" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actype']?>" readonly/></td>
                                 <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtflightnumber_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['flightnumber']?>" readonly/></td>
-                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtschedulearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['schedulearrival']?>"/></td>
-                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['estimatearrival']?>"/></td>
-                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualarrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actualarrival']?>"/></td>
+                                <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtfromstation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['departuregate']?>" readonly/></td>
+                                <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txtfromstation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['fromstation']?>" readonly/></td>                                                                           
+                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtscheduledeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempsd?>" readonly/></td>
+                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatedeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$temped?>" readonly/></td>
+                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualdeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempad?>" readonly/></td>
                                 <td style="height: 40px; width: 40px;"><input class="input-flows" type="text" id="txtgate_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['gate']?>"/></td>
-                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtscheduledeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['scheduledeparture']?>"/></td>
-                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatedeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['estimatedeparture']?>"/></td>
-                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualdeparture_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['actualdeparture']?>"/></td>
+                                <td style="height: 40px; width: 50px;"><input class="input-flows class-timer" type="text" id="txttostation_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?= $rs['tostation']?>" readonly/></td> 
+                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtschedulearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempsa?>" readonly/></td>
+                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtestimatearrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempea?>" readonly/></td>
+                                <td style="height: 40px; width: 40px;"><input class="input-flows class-timer" type="text" id="txtactualarrival_<?=$i?>" onfocus="saveThisdata(this);" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" value="<?=$tempaa?>" readonly/></td>
                                 <td style="height: 40px; width: 300px !important; color: black;">
                                     <div class="flow-slt-engineer-wrapper"><?php
                                         $thisrecno = $rs['recno'];
                                         $pt->SltEngineer()->GetSelect("txtengineers_$i", $rs['engineers'], true, true, "updateFlow(this, $thisrecno, $i)");?>
                                     </div>
                                 </td>
-                                <td style="height: 40px; width: 300px !important;"><textarea class="flow-txtarea-note" id="txtnote_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);"><?= $rs['note']?></textarea></td>
+                                <td style="height: 40px; width: 300px !important;"><textarea style="border: none;" class="flow-txtarea-note" id="txtnote_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);"><?= $rs['note']?></textarea></td>
                                 <td style="height: 40px; width: 60px !important;">
-                                    <select style="height: 40px; width: 99%; border: none;" class="flow-slt-status" id="sltstatus_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" >
+                                    <select style="height: 40px; width: 99%;" class="flow-slt-status" id="sltstatus_<?=$i?>" onchange="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);" >
                                         <option value="Select" >Select</option><?php
                                         if($rs['status'] == 'Delayed')
                                         {?>
                                             <option value="Delayed" selected>Delayed</option><?php
                                         }
+                                        else if($rs['status'] == 'Cancelled')
+                                        {?>
+                                            <option value="Cancelled" selected>Cancelled</option><?php
+                                        }
                                         else
                                         {?>
-                                            <option value="Delayed" >Delayed</option><?php
+                                            <option value="Delayed" >Delayed</option>
+                                            <option value="Cancelled" >Cancelled</option><?php
                                         }?>
                                     </select>
                                 </td>
-                                <td style="height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Service Order" onclick="toServiceorder(<?=$rs['so_recno'];?>);"><?=$rs['so_recno'];?></button></td>
-                                <td style="height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Depart" onclick="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);">Depart</button></td>
-                                <td style="height: 40px; width: 70px;"><button class="flow-button-delete" id="btnisdeleted_<?=$i?>" value="Delete" onclick="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);">Delete</button></td>
+                                <td style="display: none; height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Service Order" onclick="toServiceorder(<?=$rs['so_recno'];?>);"><?=$rs['so_recno'];?></button></td>
+                                <td style="height: 40px; width: 70px;"><button class="flow-button-depart" id="btnisdeparted_<?=$i?>" value="Depart" onclick="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);">Depart</button></td><?php
+                                if(in_array('Delete', $_SESSION['thisauth']))
+                                {?>
+                                    <td style="height: 40px; width: 70px;"><button class="flow-button-delete" id="btnisdeleted_<?=$i?>" value="Delete" onclick="updateFlow(this, <?= $rs['recno'] ?>, <?=$i?>);">Delete</button></td><?php
+                                }?>
                             </tr><?php
                             $i++;
                         }

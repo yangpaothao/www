@@ -58,12 +58,16 @@ if(count($_GET) > 0)
             function saveSignature(obj, recno){
                 //alert($("#div_signature").signature('toDataURL', 'png'));
                 thistodataurl = {cmd: 'UpdateSO', value: $("#div_signature").signature('toDataURL'), recno: recno, field: $(obj).prop('id')};
-                //alert(thistodataurl);
+               // alert(thistodataurl);
                 $.post('<?=$_SERVER['PHP_SELF']; ?>', thistodataurl, function(result){
                    //alert(result);
                     if(result == "Failed"){
                         //alert("Failed to update.  Please contact your administrator.");
                         return(false);
+                    }
+                    else
+                    {
+                        //alert(result);
                     }
                 });
             }
@@ -465,12 +469,13 @@ function UpdateSO()
         if($tempresult)
         {
             //We will do an update
+            //file_put_contents("./dodebug/debug.txt", "doing update to signature: value->".$_POST['value'], FILE_APPEND);
             foreach($tempresult as $trs)
             {
                 
                 $img = $_POST['value'];
                 $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
-                //file_put_contents("./images/signatures/".$_SESSION['employee_master_recno']."/signatures_".$trs['recno']."_signature.png", $data);  
+                file_put_contents("./images/signatures/".$_SESSION['employee_master_recno']."/signatures_".$trs['recno']."_signature.png", $data);  
                 $imagepath = "./images/signatures/".$_SESSION['employee_master_recno']."/signatures_".$trs['recno']."_signature.png";
                 //The format for the naming the image is so every signature is different and for each employee...We will create a foolder that has their recno
                 //in employee_master to reflect them.
@@ -488,13 +493,13 @@ function UpdateSO()
         {
             //file_put_contents("./dodebug/debug.txt", "Service Order -insert value: ".$_POST['value'], FILE_APPEND);
             //We will do an INSERT
-            
-            $thistempdata = array("so_foreign_key" => $_POST['recno'], "em_foreign_key" => $_SESSION['employee_master_recno'], "table_name" => "service_orders"); //First we remove the first 3 char at start then we remove the last character
+            file_put_contents("./dodebug/debug.txt", "doing insert to signature: ", FILE_APPEND);
+            $thistempdata = array("so_foreign_key" => $_POST['recno'], "em_foreign_key" => $_SESSION['employee_master_recno'], "table_name" => "service_orders"); 
             $lastinsertid = $db->PDOInsert($thistemptable, $thistempdata);
             
             $img = $_POST['value'];
             $data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $img));
-            //file_put_contents("./images/signatures/".$_SESSION['employee_master_recno']."/signatures_".$lastinsertid."_signature.png", $data);  
+            file_put_contents("./images/signatures/".$_SESSION['employee_master_recno']."/signatures_".$lastinsertid."_signature.png", $data);  
             $imagepath = "./images/signatures/".$_SESSION['employee_master_recno']."/signatures_".$lastinsertid."_signature.png";
             //The format for the naming the image is so every signature is different and for each employee...We will create a foolder that has their recno
             //in employee_master to reflect them.
@@ -505,7 +510,7 @@ function UpdateSO()
             $thistempwhere = array("recno" => $lastinsertid);
             //PDOUpdate($thistable=null, $thisdata = null, $thiswhere = null)
             $db->PDOUpdate($thistemptable, $thistempdata, $thistempwhere, $lastinsertid);
-            echo "Success";
+            //echo "Success";
         } 
         //Now that we have updated the signature, we will updated the completed by field in service_order to complete this SO
         $thistemptable = 'service_orders';
@@ -517,37 +522,41 @@ function UpdateSO()
         //First we get the Engineer list so we have something to compare this user with
         $sqlengin = "SELECT flow.recno as flowrecno, flow.engineers FROM flow INNER JOIN service_orders so ON flow.recno=so.foreignkey_flow_recno WHERE so.recno = ".$_POST['recno'];
         $resultengin = $db->PDOMiniquery($sqlengin);
-        foreach($resultengin as $rsengin)
+        if($db->PDORowcount($resultengin) > 0)
         {
-            $thisengineers = $rsengin['engineers']; //we now got the list of recno in format of 1,2,3..,n
-            $tempengineers = explode(',', $thisengineers);
-            if(!in_array($_SESSION['employee_master_recno'], array_map('trim', $tempengineers)))
+            foreach($resultengin as $rsengin)
             {
-                $thistemptable = 'flow';
-                //file_put_contents("./dodebug/debug.txt", $thisengineers.",".$_SESSION['employee_master_recno'], FILE_APPEND);
-                $thistempdata = array('engineers' => $thisengineers.",".$_SESSION['employee_master_recno']); //First we remove the first 3 char at start then we remove the last character
-                $thistempwhere = array("recno" => $rsengin['flowrecno']);
-                //PDOUpdate($thistable=null, $thisdata = null, $thiswhere = null)
-                $db->PDOUpdate($thistemptable, $thistempdata, $thistempwhere, $_POST['recno']);
+                $thisengineers = $rsengin['engineers']; //we now got the list of recno in format of 1,2,3..,n
+                $tempengineers = explode(',', $thisengineers);
+
+                
+                if(!in_array($_SESSION['employee_master_recno'], array_map('trim', $tempengineers)))
+                {
+                    $thistemptable = 'flow';
+                    //file_put_contents("./dodebug/debug.txt", $thisengineers.",".$_SESSION['employee_master_recno'], FILE_APPEND);
+                    if(!is_null($rsengin['engineers']))
+                    {
+                        $thistempdata = array('engineers' => $thisengineers.",".$_SESSION['employee_master_recno']);
+                    }
+                    else
+                    {
+                        $thistempdata = array('engineers' => $_SESSION['employee_master_recno']);
+                    }
+                    $thistempwhere = array("recno" => $rsengin['flowrecno']);
+                    //PDOUpdate($thistable=null, $thisdata = null, $thiswhere = null)
+                    $db->PDOUpdate($thistemptable, $thistempdata, $thistempwhere, $_POST['recno']);
+                }
+                
             }
-            
         }
     }
     else
     {
-        $thisdata = array($realfield => $_POST['value']); //First we remove the first 3 char at start then we remove the last character
+        $thisdata = array($realfield => $_POST['value']); 
         $thiswhere = array("recno" => $_POST['recno']);
         //PDOUpdate($thistable=null, $thisdata = null, $thiswhere = null)
         $result = $db->PDOUpdate($thistable, $thisdata, $thiswhere, $_POST['recno']);
         //file_put_contents("./dodebug/debug.txt", var_dump($_POST), FILE_APPEND);
-    }
-    if(isset($result))
-    {
-        echo 'Success';
-    }
-    else
-    {
-        echo 'Failed';
     }    
 }
 function Main()
@@ -562,6 +571,7 @@ function Main()
         $sql .= "flow.schedulearrival, flow.estimatearrival, flow.actualarrival, flow.estimatedeparture, flow.scheduledeparture, flow.fromstation, flow.tostation, ";
         $sql .= "flow.actualdeparture, s.signature FROM service_orders so INNER JOIN flow ";
         $sql .= "ON flow.recno = so.foreignkey_flow_recno LEFT JOIN signatures s ON so.recno = s.so_foreign_key WHERE so.recno='".$_POST['recno']."' AND so.isdeleted = false";
+        file_put_contents("./dodebug/debug.txt", "so_main: ".$sql."<br>", FILE_APPEND);
         $result = $db->PDOMiniquery($sql);?>        
         <div class="main-div-body">
             <div style="border: 1px solid black; padding: 20px;">
@@ -626,7 +636,7 @@ function Main()
                                 $thistemparrtime = $rs['schedulearrival'];
                             }
                             $explodead = explode(" ", $thistemparrtime);
-                            $thisdepttime = date('H:i', strtotime($explodead[1]));
+                            $thisarrivaltime = date('H:i', strtotime($explodead[1]));
                             
                             if(!is_null($rs['actualdeparture']))
                             {
@@ -659,7 +669,7 @@ function Main()
                                     <div style="width: 160px; height: 100%; float: left;">
                                         <div class="div-service-order-flightlbl" style="width: 100px;">Arrival Time:</div>
                                         <div style="float: left; width: 40px; text-align: left; vertical-align: bottom;">
-                                            <input class="service-order-inputs" type="text" id="txtactualarrival" onfocus="saveThisdata(this);" onchange="checkTime(this);updateSO(this, <?=$rs['flow_recno']?>);" value="<?= $thisarrtime; ?>" <?=$isreadonly?>/>
+                                            <input class="service-order-inputs" type="text" id="txtactualarrival" onfocus="saveThisdata(this);" onchange="checkTime(this);updateSO(this, <?=$rs['flow_recno']?>);" value="<?= $thisarrivaltime; ?>" <?=$isreadonly?>/>
                                         </div>
                                     </div>
                                     <div style="width: 120px; height: 100%; float: left;">
@@ -703,7 +713,7 @@ function Main()
                         //$resultsoi = $db->PDOQuery($thistable, $thisfields, $thiswheres);
                         $sqlso = "SELECT soi.*,items.item,c.name FROM $thistable soi INNER JOIN items ON soi.fk_item = items.recno INNER JOIN category c ON soi.fk_category = c.recno ";
                         $sqlso .= "WHERE soi.isdeleted = false AND fk_service_orders = ".$_POST['recno']." ORDER BY c.name";
-                        //file_put_contents("./dodebug/debug.txt", $sqlso, FILE_APPEND);
+                        file_put_contents("./dodebug/debug.txt", $sqlso, FILE_APPEND);
                         $sqlsoresult = $db->PDOMiniquery($sqlso);
                         if($db->PDORowcount($sqlsoresult) > 0)
                         {
@@ -816,7 +826,7 @@ function Main()
                             if(!is_null($rs['completedby']))
                             {
                                 $sqls = "SELECT em.recno, em.firstname, em.middlename, em.lastname FROM employee_master em WHERE em.recno IN (".$rs['engineers'].") ORDER BY em.lastname";
-                                //file_put_contents("./dodebug/debug.txt", $sqls, FILE_APPEND);?>
+                                file_put_contents("./dodebug/debug.txt", 'so_signature: '.$sqls, FILE_APPEND);?>
 
                                     <div style="width: 650px; height: 150px; margin: 0px auto; "><?php
                                     $reseults = $db->PDOMiniquery($sqls); //Someone completed this SO# so we show all the people that worked on this SO
@@ -849,21 +859,21 @@ function Main()
                             else
                             {
                                 $thissignature = "";
+                                //file_put_contents("./dodebug/debug.txt", "?", FILE_APPEND);
                                 if(!is_null($rs['signature']))
                                 {
                                     $thissignature = "<img src='".$rs['signature']."' />";
-                                }
-                                ?>
-                                    <div style="width: 650px; height: 180px; margin: 0px auto; ">
-                                        <div style="width: 220px; height: 145px; margin: 0px auto;">
-                                            <div class="div-signature-lbl">Engineer:</div>
-                                            <div class="div-signature-line"><?= $_SESSION['fullname']; ?></div><br/><br/>
-                                            <div id="div_signature" style="height: 100px; width: 300px;"></div>
-                                            <button style="text-align: center; margin: 0px auto; width: 60px; height: 40px;" onclick="clearSignature();" id="btnclearsignature">Clear</button>
-                                            <button style="text-align: center; margin: 0px auto; width: 120px; height: 40px;" onclick="saveSignature(this,<?=$_POST['recno']?>);" id="btnsignature">Complete</button>
-                                        </div>
-
+                                }?>
+                                <div style="width: 650px; height: 180px; margin: 0px auto; ">
+                                    <div style="width: 220px; height: 145px; margin: 0px auto;">
+                                        <div class="div-signature-lbl">Engineer:</div>
+                                        <div class="div-signature-line"><?= $_SESSION['fullname']; ?></div><br/><br/>
+                                        <div id="div_signature" style="height: 100px; width: 300px;"></div>
+                                        <button style="text-align: center; margin: 0px auto; width: 60px; height: 40px;" onclick="clearSignature();" id="btnclearsignature">Clear</button>
+                                        <button style="text-align: center; margin: 0px auto; width: 120px; height: 40px;" onclick="saveSignature(this,<?=$_POST['recno']?>);" id="btnsignature">Complete</button>
                                     </div>
+
+                                </div>
                                 <?php
                             }?>
                         </td>

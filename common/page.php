@@ -155,6 +155,12 @@ class Page_Loader {
             function manageImportant(){
                 window.location.href = "manageImportant.php"; 
             }
+            function doGetflightapi(){
+                window.location.href = "common/apigetschedule.php"; 
+            }
+            function doUpdateflightapi(){
+                window.location.href = "common/apigetscheduleupdate.php"; 
+            }
         </script><?php
         if(file_exists("./js/$page.js"))
         {?>
@@ -187,7 +193,9 @@ class Page_Loader {
                             <ul class="ul-child"><?php
                                 if(in_array('Delete', $_SESSION['thisauth']))
                                 {?>
-                                    <li onclick="doAdmin();" class="li-menu-sub">Admin</li><?php
+                                    <li onclick="doAdmin();" class="li-menu-sub">Admin</li>
+                                    <li onclick="doGetflightapi();" class="li-menu-sub">Run Get Flight API</li>
+                                    <li onclick="doUpdateflightapi();" class="li-menu-sub">Run Update Flight API</li><?php
                                 }?>
                                 <li onclick="doProfile();" class="li-menu-sub">Profile</li>
                                 <li href="#" onclick="manageAnnouncement();" class="li-menu-sub">Manage Announcement</li>
@@ -198,6 +206,7 @@ class Page_Loader {
                                 {?> 
                                     
                                     <li href="#" onclick="manageAircraft();" class="li-menu-sub">Manage Aircraft</li>
+                                    <li href="#" onclick="manageServiceorders();" class="li-menu-sub">Manage Service Orders</li>
                                     <li onclick="doFlow();" class="li-menu-sub">Flow</li><?php
                                             
                                 }?>                                
